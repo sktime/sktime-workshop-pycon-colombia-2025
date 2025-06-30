@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "pycon-workshop"
+version = "0.1.0"
+description = "Pycon Colombia 2025 Workshop"
+authors = ["felipeangelimvieira <felipeangelim@gmail.com>"]
+readme = "README.md"
+packages = [
+    { include = "pycon_workshop", from = "src" }
+]
+
+[tool.poetry.dependencies]
+python = ">=3.10, <3.13"
+sktime = "^0.38.1"
+pandas = "^2.3.0"
+numpy = "<2"
+matplotlib = "^3.10.3"
+ipython = ">=8"
+ipykernel = "^6.29.5"
+seaborn = "^0.13.2"
+statsmodels = "^0.14.4"
+pytorch-forecasting = "^1.4.0"
+transformers = "4.48.0"
+accelerate = "^1.8.1"
+pmdarima = "^2.0.4"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
