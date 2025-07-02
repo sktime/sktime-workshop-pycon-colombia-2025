@@ -18,10 +18,12 @@ ipython = ">=8"
 ipykernel = "^6.29.5"
 seaborn = "^0.13.2"
 statsmodels = "^0.14.4"
-pytorch-forecasting = "^1.4.0"
+pytorch-forecasting = "<1.4"
 transformers = "4.48.0"
 accelerate = "^1.8.1"
 pmdarima = "^2.0.4"
+xgboost = "^3.0.2"
+jupyterlab-rise = "^0.43.1"
 
 
 [build-system]

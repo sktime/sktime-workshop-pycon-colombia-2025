@@ -58,7 +58,7 @@ class PyConWorkshopDataset(BaseForecastingDataset):
         self._X = df[["promo", "macro_index"]]
 
         self._X_train, self._X_test, self._y_train, self._y_test = (
-            temporal_train_test_split(self._X, self._y, test_size=90)
+            temporal_train_test_split(self._X, self._y, test_size=180)
         )
 
         self.cache_ = {
@@ -88,7 +88,7 @@ class PyConWorkshopDataset(BaseForecastingDataset):
         if self.mode == "univariate":
             groupby_keys = []
         elif self.mode == "panel":
-            groupby_keys = ["group_id"]
+            groupby_keys = ["sku_id"]
         elif self.mode == "hierarchical":
             groupby_keys = ["group_id", "sku_id"]
         else:
@@ -107,7 +107,7 @@ class PyConWorkshopDataset(BaseForecastingDataset):
 
 
 def _generate_dataset(
-    start="2021-01-01",
+    start="2020-01-01",
     end="2025-01-01",
     n_skus=50,
     seed=123,
@@ -140,7 +140,7 @@ def _generate_dataset(
     # ------------------------------------------------------------------
     # 2. Calendar & deterministic components
     # ------------------------------------------------------------------
-    dates = pd.date_range(start, end, freq="D")
+    dates = pd.period_range(start, end, freq="D")
     n_days = len(dates)
 
     day_of_year = dates.dayofyear.values
@@ -149,6 +149,8 @@ def _generate_dataset(
 
     seasonality_factor = 1.0 + season_amp * yearly * weekly  # multiplicative
     latent_trend = trend_slope * np.arange(n_days)  # linear ↑ trend
+
+    window = 3
 
     # ------------------------------------------------------------------
     # 3. Exogenous macro index
@@ -199,6 +201,8 @@ def _generate_dataset(
         lam = np.exp(mean / 5) * seasonality_factor
         sales = rng.poisson(lam)
         sales[rng.random(n_days) < zero_prob_t] = 0
+
+        sales = centred_moving_average_with_edges(sales, window=window)
         frames.append(make_rows(sku, sales, promo_flags, group_id=0))
 
     # ------------------------------------------------------------------
@@ -230,6 +234,13 @@ def _generate_dataset(
         zero_mask = rng.random((n_days, k)) < zero_prob_t[:, None]
         sales_mat[zero_mask] = 0
 
+        sales_mat = np.apply_along_axis(
+            lambda x: centred_moving_average_with_edges(x, window=window),
+            axis=0,
+            arr=sales_mat,
+        )
+        sales_mat = np.floor(sales_mat).astype(int)
+
         for j, sku in enumerate(group):
             frames.append(
                 make_rows(sku, sales_mat[:, j], promo_mat[:, j], group_id=g_idx)
@@ -257,15 +268,57 @@ def _generate_dataset(
         lam = np.exp(mean / 5) * seasonality_factor
         sales = rng.poisson(lam)
         sales[rng.random(n_days) < zero_prob_t] = 0
+
+        sales = centred_moving_average_with_edges(sales, window=window)
         frames.append(make_rows(sku, sales, promo_flags, group_id=-1))
 
     # ------------------------------------------------------------------
     # 9. Pack and return
     # ------------------------------------------------------------------
-    df = (
-        pd.concat(frames, ignore_index=True)
-        .sort_values(["sku_id", "date"])
-        .set_index(["group_id", "sku_id", "date"])
-    )
 
+    df = pd.concat(frames, ignore_index=True)
+
+    df = df.sort_values(["sku_id", "date"]).set_index(["group_id", "sku_id", "date"])
+    df = df.sort_index()
     return df
+
+
+def centred_moving_average_with_edges(sales, window=14, *, dtype=int):
+    """
+    Centred moving average that pads with the first/last values so the output
+    has the same length as the input and no edge shrinkage.
+
+    Parameters
+    ----------
+    sales : array-like
+        1-D sequence of numbers.
+    window : int, optional (default=14)
+        Size of the sliding window (must be ≥ 1).
+    dtype : NumPy dtype, optional (default=int)
+        Integer type for the final, floored result.
+
+    Returns
+    -------
+    np.ndarray
+        Smoothed series of the same length as `sales`, with initial padding
+        replicated from the first element and final padding from the last.
+    """
+    sales = np.asarray(sales, dtype=float)
+    if sales.ndim != 1:
+        raise ValueError("`sales` must be a 1-D sequence")
+    if window < 1:
+        raise ValueError("`window` must be at least 1")
+
+    # --- 1. pad with first/last values so every centred window is complete
+    pad_left = window // 2  # floor((window-1)/2)
+    pad_right = window - 1 - pad_left  # ceil((window-1)/2)
+    sales_padded = np.pad(
+        sales, (pad_left, pad_right), mode="edge"
+    )  # repeats edge values
+
+    # --- 2. centred moving average
+    weights = np.full(window, 1.0 / window, dtype=float)
+    smoothed = np.convolve(sales_padded, weights, mode="valid")  # len == len(sales)
+
+    # --- 3. floor to integer type if desired
+    return np.floor(smoothed).astype(dtype)
