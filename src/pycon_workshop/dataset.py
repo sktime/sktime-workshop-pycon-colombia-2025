@@ -55,7 +55,7 @@ class PyConWorkshopDataset(BaseForecastingDataset):
     def _cache_dataset(self):
         df = _generate_dataset()
         self._y = df[["sales"]]
-        self._X = df[["promo", "macro_index"]]
+        self._X = df[["promo"]]
 
         self._X_train, self._X_test, self._y_train, self._y_test = (
             temporal_train_test_split(self._X, self._y, test_size=180)
@@ -95,7 +95,9 @@ class PyConWorkshopDataset(BaseForecastingDataset):
             raise ValueError(f"Unknown mode: {self.mode}")
 
         _agg = {
-            "X": {"promo": "mean", "macro_index": "mean"},
+            "X": {
+                "promo": "mean",
+            },
             "y": {"sales": "sum"},
         }
 
@@ -112,9 +114,8 @@ def _generate_dataset(
     n_skus=50,
     seed=123,
     base_lambda=5,
-    macro_trend_amp=5,
     promo_prob=0.05,
-    promo_effect=1.5,
+    promo_effect=3,
     # new / tuned knobs ↓
     trend_slope=0.01,  # upward drift per day
     season_amp=0.30,  # multiplicative seasonal amplitude (±30 %)
@@ -144,8 +145,10 @@ def _generate_dataset(
     n_days = len(dates)
 
     day_of_year = dates.dayofyear.values
-    yearly = np.sin(2 * np.pi * day_of_year / 365.25)
-    weekly = np.where(dates.weekday < 5, 1.0, 1.3)
+    yearly = np.sin(2 * np.pi * day_of_year / 365.25) + 0.2 * np.cos(
+        2 * np.pi * day_of_year / 365.25
+    )
+    weekly = np.where(dates.weekday < 5, 1.0, 1.6)
 
     seasonality_factor = 1.0 + season_amp * yearly * weekly  # multiplicative
     latent_trend = trend_slope * np.arange(n_days)  # linear ↑ trend
@@ -155,12 +158,7 @@ def _generate_dataset(
     # ------------------------------------------------------------------
     # 3. Exogenous macro index
     # ------------------------------------------------------------------
-    macro_index = (
-        100
-        + macro_trend_amp * np.sin(2 * np.pi * day_of_year / 180)
-        + rng.normal(0, 2, n_days)
-    )
-    macro_index_z = (macro_index - macro_index.mean()) / macro_index.std()
+    promo_days = (rng.random(n_days) < promo_prob) * np.random.uniform(0.5, 1.5, n_days)
 
     # ------------------------------------------------------------------
     # 4. Time-varying zero-inflation probability
@@ -179,7 +177,6 @@ def _generate_dataset(
                 "sku_id": sku,
                 "sales": sales,
                 "promo": promo_flags.astype(int),
-                "macro_index": macro_index,
                 "group_id": group_id,
             }
         )
@@ -189,14 +186,9 @@ def _generate_dataset(
     # ------------------------------------------------------------------
     shared_noise_pos = rng.normal(0, 0.3, n_days)
     for sku in positive_group:
-        gamma = rng.normal(0.7, 0.2)
-        promo_flags = rng.random(n_days) < promo_prob
+        promo_flags = promo_days
         mean = (
-            base_lambda
-            + latent_trend
-            + shared_noise_pos
-            + gamma * macro_index_z
-            + promo_effect * promo_flags
+            base_lambda + latent_trend + shared_noise_pos + promo_effect * promo_flags
         )
         lam = np.exp(mean / 5) * seasonality_factor
         sales = rng.poisson(lam)
@@ -210,17 +202,14 @@ def _generate_dataset(
     # ------------------------------------------------------------------
     for g_idx, group in enumerate(negative_groups, start=1):
         k = len(group)
-        gamma_group = rng.normal(0.5, 0.3)
         group_noise = rng.normal(0, 0.4, n_days)
-        group_mean = (
-            base_lambda + latent_trend + group_noise + gamma_group * macro_index_z
-        )
+        group_mean = base_lambda + latent_trend + group_noise
         group_lambda = np.exp(group_mean / 5) * seasonality_factor
         group_sales_total = rng.poisson(group_lambda)
 
         alpha = np.ones(k) * 0.8
         base_probs = rng.dirichlet(alpha, n_days)  # (n_days, k)
-        promo_mat = rng.random((n_days, k)) < promo_prob
+        promo_mat = np.tile(promo_days.reshape(-1, 1), (1, k))
         adj_probs = base_probs * (1 + 0.3 * promo_mat)
         adj_probs = adj_probs / adj_probs.sum(axis=1, keepdims=True)
 
@@ -256,13 +245,11 @@ def _generate_dataset(
     ]
 
     for sku in independent_skus:
-        gamma = rng.normal(0.0, 0.5)
-        promo_flags = rng.random(n_days) < promo_prob
+        promo_flags = promo_days
         mean = (
             base_lambda
             + latent_trend
             + rng.normal(0, 0.5, n_days)
-            + gamma * macro_index_z
             + promo_effect * promo_flags
         )
         lam = np.exp(mean / 5) * seasonality_factor
