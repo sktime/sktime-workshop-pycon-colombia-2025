@@ -1720,17 +1720,6 @@ test = ["coverage", "pytest (>=7.0)", "pytest-check-links (>=0.7)", "pytest-cons
 upgrade-extension = ["copier (>=9,<10)", "jinja2-time (<0.3)", "pydantic (<3.0)", "pyyaml-include (<3.0)", "tomli-w (<2.0)"]
 
 [[package]]
-name = "jupyterlab-mathjax3"
-version = "4.3.0"
-description = "MathJax 3 math renderer for JupyterLab"
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "jupyterlab-mathjax3-4.3.0.tar.gz", hash = "sha256:daee13969453ecfa22ac8969cd1daa8f887731ace8adb93a574b47aecabdc5dd"},
-    {file = "jupyterlab_mathjax3-4.3.0-py3-none-any.whl", hash = "sha256:07d2a40cea9293bb56210b87620088e6aa5bb45c05aac86d3e917d6c1aded711"},
-]
-
-[[package]]
 name = "jupyterlab-pygments"
 version = "0.3.0"
 description = "Pygments theme using JupyterLab CSS variables"
@@ -1740,25 +1729,6 @@ files = [
     {file = "jupyterlab_pygments-0.3.0-py3-none-any.whl", hash = "sha256:841a89020971da1d8693f1a99997aefc5dc424bb1b251fd6322462a1b8842780"},
     {file = "jupyterlab_pygments-0.3.0.tar.gz", hash = "sha256:721aca4d9029252b11cfa9d185e5b5af4d54772bb8072f9b7036f4170054d35d"},
 ]
-
-[[package]]
-name = "jupyterlab-rise"
-version = "0.43.1"
-description = "RISE: \"Live\" Reveal.js JupyterLab Slideshow extension."
-optional = false
-python-versions = ">=3.9"
-files = [
-    {file = "jupyterlab_rise-0.43.1-py3-none-any.whl", hash = "sha256:62ba6d8c07a80dff293589512d57901029800a23a860904b14eb96d597cb8573"},
-    {file = "jupyterlab_rise-0.43.1.tar.gz", hash = "sha256:264ec00e2cb5cc68e2042a054eea2d42925f47f36d883eba9c475b6dd2fe87d3"},
-]
-
-[package.dependencies]
-jupyter-server = ">=2.0.1,<3"
-jupyterlab = ">=4.1.0,<5"
-jupyterlab-mathjax3 = "*"
-
-[package.extras]
-test = ["coverage", "pytest", "pytest-asyncio", "pytest-cov", "pytest-jupyter[server] (>=0.6.0)"]
 
 [[package]]
 name = "jupyterlab-server"
@@ -4964,4 +4934,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.13"
-content-hash = "bb4af13c0d3ca7e05819b48c959814aa7dc33e3c1d02527018078437e614e15a"
+content-hash = "65c099745fa4b8b8e094ef65dc8943ce69b5c076f0a3ac47fddefc7f75381640"

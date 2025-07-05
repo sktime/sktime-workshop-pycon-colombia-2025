@@ -11,8 +11,8 @@ transformers==4.48.0
 accelerate>=1.8.1
 pmdarima>=2.0.4
 xgboost>=3.0.2
-jupyterlab-rise>=0.43.1
 prophetverse>=0.8.1
+jupyterlab>=4.4.4
 
 # Install current directory as editable package
 -e .

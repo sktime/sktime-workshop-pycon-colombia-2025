@@ -2,6 +2,7 @@ from sktime.datasets.forecasting._base import BaseForecastingDataset
 import numpy as np
 import pandas as pd
 from sktime.split.temporal_train_test_split import temporal_train_test_split
+from sktime.transformations.hierarchical.aggregate import Aggregator
 
 
 class PyConWorkshopDataset(BaseForecastingDataset):
@@ -91,6 +92,7 @@ class PyConWorkshopDataset(BaseForecastingDataset):
             groupby_keys = ["sku_id"]
         elif self.mode == "hierarchical":
             groupby_keys = ["group_id", "sku_id"]
+
         else:
             raise ValueError(f"Unknown mode: {self.mode}")
 
@@ -105,6 +107,13 @@ class PyConWorkshopDataset(BaseForecastingDataset):
             key: df.groupby(groupby_keys + ["date"]).agg(_agg[key.split("_")[0]])
             for key, df in self.cache_.items()
         }
+
+        # If hierarchical, aggregate to add totals
+        if self.mode == "hierarchical":
+            for key in cache:
+                cache[key] = Aggregator().fit_transform(cache[key])
+                if key.startswith("X"):
+                    cache[key] = cache[key].clip(0, 1)
         return cache
 
 
