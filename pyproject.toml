@@ -11,7 +11,7 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.10, <3.13"
 sktime = "^0.38.1"
-pandas = "^2.3.0"
+pandas = "<=2.2"
 numpy = "<2"
 matplotlib = "^3.10.3"
 ipython = ">=8"
@@ -24,6 +24,7 @@ accelerate = "^1.8.1"
 pmdarima = "^2.0.4"
 xgboost = "^3.0.2"
 jupyterlab-rise = "^0.43.1"
+prophetverse = "^0.8.1"
 
 
 [build-system]

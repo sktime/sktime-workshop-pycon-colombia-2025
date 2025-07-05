@@ -111,11 +111,11 @@ class PyConWorkshopDataset(BaseForecastingDataset):
 def _generate_dataset(
     start="2020-01-01",
     end="2025-01-01",
-    n_skus=50,
+    n_skus=25,
     seed=123,
     base_lambda=5,
     promo_prob=0.05,
-    promo_effect=3,
+    promo_effect=2,
     # new / tuned knobs ↓
     trend_slope=0.01,  # upward drift per day
     season_amp=0.30,  # multiplicative seasonal amplitude (±30 %)
@@ -145,12 +145,33 @@ def _generate_dataset(
     n_days = len(dates)
 
     day_of_year = dates.dayofyear.values
-    yearly = np.sin(2 * np.pi * day_of_year / 365.25) + 0.2 * np.cos(
-        2 * np.pi * day_of_year / 365.25
+    yearly = (
+        np.sin(2 * np.pi * day_of_year / 365.25)
+        + 0.8 * np.cos(2 * np.pi * day_of_year / 365.25)
+        + 0.2 * np.sin(4 * np.pi * day_of_year / 365.25)
+        + -0.2 * np.cos(4 * np.pi * day_of_year / 365.25)
     )
-    weekly = np.where(dates.weekday < 5, 1.0, 1.6)
+    # weekly = np.where(dates.weekday < 5, 1.0, 1.6)
+    weekly = (
+        0.5 * np.sin(2 * np.pi * np.arange(len(dates)) / 7)
+        - 0.2 * np.cos(2 * np.pi * np.arange(len(dates)) / 7)
+    ) + 1
 
-    seasonality_factor = 1.0 + season_amp * yearly * weekly  # multiplicative
+    # Monthly seasonality using Fourier terms
+    # t/freq where t is day of month and freq is days in that month
+    monthly_t_freq = np.array([date.day / date.days_in_month for date in dates])
+    monthly = (
+        0.5
+        * (
+            0.5 * np.sin(2 * np.pi * monthly_t_freq)
+            - 0.5 * np.cos(2 * np.pi * monthly_t_freq)
+            + 0.01 * np.sin(4 * np.pi * monthly_t_freq)
+            - 0.05 * np.cos(4 * np.pi * monthly_t_freq)
+        )
+        + 1
+    )
+
+    seasonality_factor = 1.0 + season_amp * yearly + weekly + monthly  # multiplicative
     latent_trend = trend_slope * np.arange(n_days)  # linear ↑ trend
 
     window = 3
