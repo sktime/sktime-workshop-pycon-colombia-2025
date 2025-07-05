@@ -10,7 +10,7 @@ This tutorial gives an up-to-date introduction to sktime base features with a fo
 
 [sktime]: https://www.sktime.net
 
-[![Binder](https://mybinder.org/badge_logo.svg)]() [![!discord](https://img.shields.io/static/v1?logo=discord&label=discord&message=chat&color=lightgreen)](https://discord.com/invite/54ACzaFsn7) [![!slack](https://img.shields.io/static/v1?logo=linkedin&label=LinkedIn&message=news&color=lightblue)](https://www.linkedin.com/company/scikit-time/)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sktime/sktime-workshop-pycon-colombia-2025/HEAD?urlpath=%2Fdoc%2Ftree%2Fnotebooks%2F01_univariate.ipynb) [![!discord](https://img.shields.io/static/v1?logo=discord&label=discord&message=chat&color=lightgreen)](https://discord.com/invite/54ACzaFsn7) [![!slack](https://img.shields.io/static/v1?logo=linkedin&label=LinkedIn&message=news&color=lightblue)](https://www.linkedin.com/company/scikit-time/)
 
 ## :rocket: How to get started
 
