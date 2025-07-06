@@ -188,7 +188,7 @@ def _generate_dataset(
     # ------------------------------------------------------------------
     # 3. Exogenous macro index
     # ------------------------------------------------------------------
-    promo_days = (rng.random(n_days) < promo_prob) * np.random.uniform(0.5, 1.5, n_days)
+    promo_days = (rng.random(n_days) < promo_prob) * rng.uniform(1, 1.5, n_days)
 
     # ------------------------------------------------------------------
     # 4. Time-varying zero-inflation probability
